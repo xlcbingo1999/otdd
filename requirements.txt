@@ -6,7 +6,7 @@
 # scipy
 # matplotlib
 # torchvision
-# torchtext
+torchtext
 sentence-transformers
 skorch
 
