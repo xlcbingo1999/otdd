@@ -77,6 +77,7 @@ def get_df_config():
     parser.add_argument("--mix_two_ratio", type=float, default=0.0)
     parser.add_argument("--EPSILON", type=float, default=5.0)
     parser.add_argument("--model_name", type=str, default="CNN") # resnet
+    parser.add_argument("--need_cal_OTDD", action='store_true')
 
     args = parser.parse_args()
     return args
@@ -114,21 +115,18 @@ else:
 
 current_time =  time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
 if train_dataset_name == 'EMNIST' or 'EMNIST' in test_dataset_names:
-    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id, '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), current_time)
-    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id,  '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), current_time)
+    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id, '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), emnist_test_id, current_time)
+    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id,  '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), emnist_test_id, current_time)
 else:
     result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), current_time)
     summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), current_time)
 
 
-train_dir = None
-test_dir = None
-
-
+train_dir = '/mnt/linuxidc_client/dataset'
+test_dir = '/mnt/linuxidc_client/dataset'
 
 if train_dataset_name == 'EMNIST':
     sub_train_key = 'train_sub_{}'.format(emnist_train_id)
-    train_dir = '/mnt/linuxidc_client/dataset'
     sub_train_config_path = '/mnt/linuxidc_client/dataset/sub_train_datasets_config.json'
     with open(sub_train_config_path, 'r+') as f:
         current_subtrain_config = json.load(f)
@@ -142,61 +140,65 @@ else:
 
 all_test_datasets = []
 for i, name in enumerate(test_dataset_names):
-    if name == 'EMNIST':
-        sub_test_key = 'test_sub_{}'.format(emnist_test_id)
-        test_dir = '/mnt/linuxidc_client/dataset'
-        sub_test_config_path = '/mnt/linuxidc_client/EMNIST/EMNIST_sub_train_datasets_config_4_10.0.json'
-        
-        with open(sub_test_config_path, 'r+') as f:
-            current_subtest_config = json.load(f)
-            f.close()
+    if test_sample_nums[i] > 0:
+        if name == 'EMNIST':
+            sub_test_key = 'test_sub_{}'.format(emnist_test_id)
+            sub_test_config_path = '/mnt/linuxidc_client/dataset/EMNIST/EMNIST_test_dataset_config_4_10.0.json'
+            
+            with open(sub_test_config_path, 'r+') as f:
+                current_subtest_config = json.load(f)
+                f.close()
 
-        sub_test_origin_indexes_list = list(current_subtest_config[name][sub_test_key]["indexes"])
-        sub_test_origin_indexes_list = np.random.choice(sub_test_origin_indexes_list, test_sample_nums[i], replace=False)
+            sub_test_origin_indexes_list = list(current_subtest_config[name][sub_test_key]["indexes"])
+            sub_test_origin_indexes_list = np.random.choice(sub_test_origin_indexes_list, test_sample_nums[i], replace=False)
 
-        _, _, test_dataset = load_torchvision_data_from_indexes(name, target_indexes=sub_test_origin_indexes_list, sample_num=None, target_type='test', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=test_dir)
-    else:
-        _, _, test_dataset = load_torchvision_data_from_indexes(name, target_indexes=None, sample_num=test_sample_nums[i], target_type='test', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=test_dir)
-    all_test_datasets.append(test_dataset)
-test_dataset = ConcatDataset(all_test_datasets)
+            _, _, test_dataset = load_torchvision_data_from_indexes(name, target_indexes=sub_test_origin_indexes_list, sample_num=None, target_type='test', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=test_dir)
+        else:
+            _, _, test_dataset = load_torchvision_data_from_indexes(name, target_indexes=None, sample_num=test_sample_nums[i], target_type='test', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=test_dir)
+        all_test_datasets.append(test_dataset)
+if len(all_test_datasets) > 1:
+    test_dataset = ConcatDataset(all_test_datasets)
+else:
+    test_dataset = all_test_datasets[0]
 loaders_tgt = DataLoader(test_dataset)
 
-embedder = resnet18(pretrained=True).eval()
-embedder.fc = torch.nn.Identity()
-for p in embedder.parameters():
-    p.requires_grad = False
+if args.need_cal_OTDD:
+    embedder = resnet18(pretrained=True).eval()
+    embedder.fc = torch.nn.Identity()
+    for p in embedder.parameters():
+        p.requires_grad = False
 
-# Here we use same embedder for both datasets
-feature_cost = FeatureCost(src_embedding = embedder,
-                        src_dim = (3,28,28),
-                        tgt_embedding = embedder,
-                        tgt_dim = (3,28,28),
-                        p = 2,
-                        device=device)
+    # Here we use same embedder for both datasets
+    feature_cost = FeatureCost(src_embedding = embedder,
+                            src_dim = (3,28,28),
+                            tgt_embedding = embedder,
+                            tgt_dim = (3,28,28),
+                            p = 2,
+                            device=device)
 
-dist = DatasetDistance(loaders_src, loaders_tgt,
-                        inner_ot_method = 'exact',
-                        debiased_loss = True,
-                        feature_cost = feature_cost,
-                        sqrt_method = 'spectral',
-                        sqrt_niters=10,
-                        precision='single',
-                        p = 2, entreg = 1e-1,
-                        device=device,
-                        batch_size=calculate_batch_size)
+    dist = DatasetDistance(loaders_src, loaders_tgt,
+                            inner_ot_method = 'exact',
+                            debiased_loss = True,
+                            feature_cost = feature_cost,
+                            sqrt_method = 'spectral',
+                            sqrt_niters=10,
+                            precision='single',
+                            p = 2, entreg = 1e-1,
+                            device=device,
+                            batch_size=calculate_batch_size)
 
-begin = time.time()
-d = dist.distance(maxsamples = 10000)
-end = time.time()
+    begin = time.time()
+    d = dist.distance(maxsamples = 10000)
+    end = time.time()
 
-with open(result_file_name, 'a+') as f:
-    print("Total time: {} s".format(end - begin))
-    print(f'Embedded OTDD({train_dataset_name},{test_dataset_names})={d:8.2f}')
-    print(f'test_sample_nums: {test_sample_nums}')
-    print("Total time: {} s".format(end - begin), file=f)
-    print(f'Embedded OTDD({train_dataset_name},{test_dataset_names})={d:8.2f}', file=f)
-    print(f'test_sample_nums: {test_sample_nums}', file=f)
-del embedder
+    with open(result_file_name, 'a+') as f:
+        print("Total time: {} s".format(end - begin))
+        print(f'Embedded OTDD({train_dataset_name},{test_dataset_names})={d:8.2f}')
+        print(f'test_sample_nums: {test_sample_nums}')
+        print("Total time: {} s".format(end - begin), file=f)
+        print(f'Embedded OTDD({train_dataset_name},{test_dataset_names})={d:8.2f}', file=f)
+        print(f'test_sample_nums: {test_sample_nums}', file=f)
+    del embedder
 
 device = torch.device("cuda:{}".format(DEVICE_INDEX) if torch.cuda.is_available() else "cpu")
 
@@ -204,6 +206,11 @@ if MODEL_NAME == "CNN":
     model = CNN(output_dim=len(train_dataset.classes))
 elif MODEL_NAME == "resnet":
     model = models.resnet18(num_classes=len(train_dataset.classes))
+
+if EPSILON > 0.0:
+    model = ModuleValidator.fix(model)
+    errors = ModuleValidator.validate(model, strict=False)
+    print("error: {}".format(errors))
 
 model = model.to(device)
 criterion = nn.CrossEntropyLoss()
