@@ -128,8 +128,8 @@ test_dir = None
 
 if train_dataset_name == 'EMNIST':
     sub_train_key = 'train_sub_{}'.format(emnist_train_id)
-    train_dir = '/mnt/linuxidc_client/dataset/Amazon_Review_split/EMNIST'
-    sub_train_config_path = '/mnt/linuxidc_client/dataset/Amazon_Review_split/sub_train_datasets_config.json'
+    train_dir = '/mnt/linuxidc_client/dataset'
+    sub_train_config_path = '/mnt/linuxidc_client/dataset/sub_train_datasets_config.json'
     with open(sub_train_config_path, 'r+') as f:
         current_subtrain_config = json.load(f)
         f.close()
@@ -144,8 +144,8 @@ all_test_datasets = []
 for i, name in enumerate(test_dataset_names):
     if name == 'EMNIST':
         sub_test_key = 'test_sub_{}'.format(emnist_test_id)
-        test_dir = '/mnt/linuxidc_client/dataset/Amazon_Review_split/EMNIST'
-        sub_test_config_path = '/mnt/linuxidc_client/dataset/Amazon_Review_split/EMNIST_test_dataset_config_4_10.0.json'
+        test_dir = '/mnt/linuxidc_client/dataset'
+        sub_test_config_path = '/mnt/linuxidc_client/EMNIST/EMNIST_sub_train_datasets_config_4_10.0.json'
         
         with open(sub_test_config_path, 'r+') as f:
             current_subtest_config = json.load(f)
