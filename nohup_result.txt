@@ -1,0 +1,55 @@
+6 tr-te相同时的结果
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 0 --train_id 0 --test_id 0
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 1 --train_id 1 --test_id 1
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 2 --train_id 2 --test_id 2
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 3 --train_id 3 --test_id 3
+
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 0 --train_id 4 --test_id 4
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 1 --train_id 5 --test_id 5
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 2 --train_id 6 --test_id 6
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 3 --train_id 7 --test_id 7
+
+6 tr-te完全不同时的结果
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 1 --train_id 0 --test_id 1
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 2 --train_id 0 --test_id 2
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 3 --train_id 0 --test_id 3
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 0 --train_id 0 --test_id 4
+
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 1 --train_id 0 --test_id 5
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 2 --train_id 0 --test_id 6
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 3 --train_id 0 --test_id 7
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 0 --train_id 0 --test_id 8
+
+6 tr-te部分相同时的结果
+
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 1 --train_id 0 --test_id 1 --mix_two_ratio 0.1
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 2 --train_id 0 --test_id 1 --mix_two_ratio 0.2
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 3 --train_id 0 --test_id 1 --mix_two_ratio 0.3
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 0 --train_id 0 --test_id 1 --mix_two_ratio 0.4
+
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 1 --train_id 0 --test_id 1 --mix_two_ratio 0.5
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 2 --train_id 0 --test_id 1 --mix_two_ratio 0.6
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 3 --train_id 0 --test_id 1 --mix_two_ratio 0.7
+python /home/netlab/DL_lab/otdd/all_train_example.py --device_index 0 --train_id 0 --test_id 1 --mix_two_ratio 0.8
+
+6
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_name EMNIST --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_name SVHN --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_name USPS --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_name STL10 --EPSILON 5.0
+
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_name CIFAR10 --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_name MNIST --EPSILON 5.0
+
+6 当前
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_name EMNIST --emnist_train_id 0 --emnist_test_id 0 --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_name EMNIST --emnist_train_id 0 --emnist_test_id 1 --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_name EMNIST --emnist_train_id 0 --emnist_test_id 2 --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_name EMNIST --emnist_train_id 0 --emnist_test_id 3 --EPSILON 5.0
+
+
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_name EMNIST --emnist_train_id 1 --emnist_test_id 0 --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_name EMNIST --emnist_train_id 1 --emnist_test_id 1 --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_name EMNIST --emnist_train_id 1 --emnist_test_id 2 --EPSILON 5.0
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_name EMNIST --emnist_train_id 1 --emnist_test_id 3 --EPSILON 5.0
+

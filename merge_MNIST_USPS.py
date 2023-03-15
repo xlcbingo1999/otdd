@@ -28,11 +28,6 @@ import time
 from operator import add
 from functools import reduce
 
-
-# Load MNIST/CIFAR in 3channels (needed by torchvision models)
-# loaders_src = load_torchvision_data('CIFAR10', resize=28, maxsize=2000)[0]
-# loaders_tgt = load_torchvision_data('MNIST', resize=28, to3channels=True, maxsize=2000)[0]
-
 class CNN(nn.Module):
     def __init__(self, output_dim):
         super(CNN, self).__init__()
@@ -70,8 +65,7 @@ def get_df_config():
                 description="Sweep through lambda values")
     parser.add_argument("--device_index", type=int, default=0)
     parser.add_argument("--train_dataset_name", type=str, default="EMNIST")
-    parser.add_argument("--test_dataset_names", type=str, nargs="+", default=["USPS", "SVHN"]) # SVHN, USPS, STL10, CIFAR10, KMNIST, FashionMNIST
-    parser.add_argument("--test_sample_nums", type=int, nargs="+", default=[1500, 500])
+    parser.add_argument("--test_dataset_name", type=str, default="EMNIST") # SVHN, USPS, STL10, CIFAR10, KMNIST, FashionMNIST
     parser.add_argument("--emnist_train_id", type=int, default=0)
     parser.add_argument("--emnist_test_id", type=int, default=1)
     parser.add_argument("--mix_two_ratio", type=float, default=0.0)
@@ -85,15 +79,8 @@ args = get_df_config()
 
 train_dataset_name = args.train_dataset_name
 emnist_train_id = args.emnist_train_id
-# test_dataset_name = args.test_dataset_name
-test_dataset_names = args.test_dataset_names
+test_dataset_name = args.test_dataset_name
 emnist_test_id = args.emnist_test_id
-test_sample_nums = args.test_sample_nums
-
-train_sample_num = 18000
-test_sample_num = 2000
-distance_batch_size = 1024
-calculate_batch_size = 1024
 
 DEVICE_INDEX = args.device_index
 device = 'cuda:{}'.format(DEVICE_INDEX)
@@ -113,35 +100,34 @@ else:
 
 
 current_time =  time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
-if train_dataset_name == 'EMNIST' or 'EMNIST' in test_dataset_names:
-    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id, ''.join(test_dataset_names), ''.join(map(str, test_sample_nums)), current_time)
-    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id,  ''.join(test_dataset_names), ''.join(map(str, test_sample_nums)), current_time)
+if train_dataset_name == 'EMNIST' and test_dataset_name == 'EMNIST':
+    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id,  test_dataset_name, emnist_test_id, current_time)
+    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id,  test_dataset_name, emnist_test_id, current_time)
 else:
-    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, ''.join(test_dataset_names), ''.join(map(str, test_sample_nums)), current_time)
-    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, ''.join(test_dataset_names), ''.join(map(str, test_sample_nums)), current_time)
+    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, test_dataset_name, current_time)
+    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, test_dataset_name, current_time)
 
-
+train_sample_num = 18000
+distance_batch_size = 1024
+calculate_batch_size = 1024
 train_dir = None
 test_dir = None
 
+sub_train_key = 'train_sub_{}'.format(emnist_train_id)
+train_dir = '/mnt/linuxidc_client/dataset/Amazon_Review_split/EMNIST'
+sub_train_config_path = '/mnt/linuxidc_client/dataset/Amazon_Review_split/sub_train_datasets_config.json'
+with open(sub_train_config_path, 'r+') as f:
+    current_subtrain_config = json.load(f)
+    f.close()
+sub_train_origin_indexes_list = list(current_subtrain_config[train_dataset_name][sub_train_key]["indexes"])
+sub_train_origin_indexes_list = np.random.choice(sub_train_origin_indexes_list, train_sample_num, replace=False)
+loaders_src, ratio_src, train_dataset = load_torchvision_data_from_indexes(train_dataset_name, target_indexes=sub_train_origin_indexes_list, sample_num=None, target_type='train', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=train_dir)
 
-
-if train_dataset_name == 'EMNIST':
-    sub_train_key = 'train_sub_{}'.format(emnist_train_id)
-    train_dir = '/mnt/linuxidc_client/dataset/Amazon_Review_split/EMNIST'
-    sub_train_config_path = '/mnt/linuxidc_client/dataset/Amazon_Review_split/sub_train_datasets_config.json'
-    with open(sub_train_config_path, 'r+') as f:
-        current_subtrain_config = json.load(f)
-        f.close()
-    sub_train_origin_indexes_list = list(current_subtrain_config[train_dataset_name][sub_train_key]["indexes"])
-    sub_train_origin_indexes_list = np.random.choice(sub_train_origin_indexes_list, train_sample_num, replace=False)
-
-    loaders_src, ratio_src, train_dataset = load_torchvision_data_from_indexes(train_dataset_name, target_indexes=sub_train_origin_indexes_list, sample_num=None, target_type='train', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=train_dir)
-else:
-    loaders_src, ratio_src, train_dataset = load_torchvision_data_from_indexes(train_dataset_name, target_indexes=None, sample_num=train_sample_num, target_type='train', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=train_dir)
+all_test_names = ['EMNIST', 'USPS']
+test_sample_nums = [500, 1500]
 
 all_test_datasets = []
-for i, name in enumerate(test_dataset_names):
+for i, name in enumerate(all_test_names):
     if name == 'EMNIST':
         sub_test_key = 'test_sub_{}'.format(emnist_test_id)
         test_dir = '/mnt/linuxidc_client/dataset/Amazon_Review_split/EMNIST'
@@ -158,8 +144,15 @@ for i, name in enumerate(test_dataset_names):
     else:
         _, _, test_dataset = load_torchvision_data_from_indexes(name, target_indexes=None, sample_num=test_sample_nums[i], target_type='test', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=test_dir)
     all_test_datasets.append(test_dataset)
+
 test_dataset = ConcatDataset(all_test_datasets)
 loaders_tgt = DataLoader(test_dataset)
+
+print(len(test_dataset))
+
+print("train_label: {}".format(set([label for _, label in train_dataset])))
+print("test_label: {}".format(set([label for _, label in test_dataset])))
+
 
 embedder = resnet18(pretrained=True).eval()
 embedder.fc = torch.nn.Identity()
@@ -191,12 +184,12 @@ end = time.time()
 
 with open(result_file_name, 'a+') as f:
     print("Total time: {} s".format(end - begin))
-    print(f'Embedded OTDD({train_dataset_name},{test_dataset_names})={d:8.2f}')
-    print(f'test_sample_nums: {test_sample_nums}')
+    print(f'Embedded OTDD({train_dataset_name},{test_dataset_name})={d:8.2f}')
     print("Total time: {} s".format(end - begin), file=f)
-    print(f'Embedded OTDD({train_dataset_name},{test_dataset_names})={d:8.2f}', file=f)
-    print(f'test_sample_nums: {test_sample_nums}', file=f)
+    print(f'Embedded OTDD({train_dataset_name},{test_dataset_name})={d:8.2f}', file=f)
 del embedder
+
+
 
 device = torch.device("cuda:{}".format(DEVICE_INDEX) if torch.cuda.is_available() else "cpu")
 

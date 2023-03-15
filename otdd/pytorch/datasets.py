@@ -4,6 +4,7 @@ from functools import partial
 import random
 import logging
 import string
+import copy
 
 import numpy as np
 import torch
@@ -152,6 +153,27 @@ class CustomTensorDataset(torch.utils.data.Dataset):
     def __len__(self):
         return self.tensors[0].size(0)
 
+class CustomDataset(torch.utils.data.Dataset):
+    """An abstract Dataset class wrapped around Pytorch Dataset class.
+    """
+
+    def __init__(self, dataset, indices):
+        self.dataset = dataset
+        self.indices = [int(i) for i in indices]
+        self.targets = dataset.targets # 保留targets属性
+        self.classes = dataset.classes # 保留classes属性
+        
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, item):
+        x, y = self.dataset[self.indices[item]]
+        return x, y
+    
+    def get_class_distribution(self):
+        sub_targets = self.targets[self.indices]
+        return sub_targets.unique(return_counts=True)
+
 class SubsetFromLabels(torch.utils.data.dataset.Dataset):
     """ Subset of a dataset at specified indices.
 
@@ -297,7 +319,7 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
 
         transform_list = []
 
-        if dataname in ['MNIST', 'USPS'] and to3channels:
+        if dataname in ['MNIST', 'USPS', 'EMNIST'] and to3channels:
             transform_list.append(torchvision.transforms.Grayscale(3))
 
         transform_list.append(torchvision.transforms.ToTensor())
@@ -326,7 +348,7 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
         if datadir is None:
             datadir = DATA_DIR
         if dataname == 'EMNIST':
-            split = 'letters'
+            split = 'bymerge'
             train = DATASET(datadir, split=split, train=True, download=download, transform=train_transform)
             test = DATASET(datadir, split=split, train=False, download=download, transform=valid_transform)
             ## EMNIST seems to have a bug - classes are wrong
@@ -451,8 +473,135 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
     logger.info('Classes: {} (effective: {})'.format(len(train.classes), len(torch.unique(train.targets))))
     print(f'Fold Sizes: {flens} ({fnames})')
 
-    return fold_loaders, {'train': train, 'test':test}
+    result_fold_idxs = copy.deepcopy(fold_idxs)
+    result_fold_idxs['test'] = test_idxs
+    return fold_loaders, {'train': train, 'test':test}, result_fold_idxs
 
+
+def load_torchvision_data_from_indexes(dataname, target_indexes=None, sample_num=None, target_type='train',
+                            shuffle=True,  random_seed=None, batch_size = 64,
+                            resize=None, to3channels=False,
+                            num_workers = 0, transform=None,
+                            data=None, datadir=None, download=True):
+    """ Load torchvision datasets.
+
+        We return train and test for plots and post-training experiments
+    """
+    if target_type == 'train' and target_indexes is None:
+        raise ValueError("target_type == train and target_indexes is None")
+    if (target_indexes is None and sample_num is None) or (target_indexes is not None and sample_num is not None):
+        raise ValueError("(target_indexes is None and ratio is None) or (target_indexes is not None and ratio is not None)")
+    if shuffle == True and random_seed:
+        np.random.seed(random_seed)
+    if transform is None:
+        if dataname in DATASET_NORMALIZATION.keys():
+            transform_dataname = dataname
+        else:
+            transform_dataname = 'ImageNet'
+
+        transform_list = []
+
+        if dataname in ['MNIST', 'USPS', 'EMNIST'] and to3channels:
+            transform_list.append(torchvision.transforms.Grayscale(3))
+
+        transform_list.append(torchvision.transforms.ToTensor())
+        transform_list.append(
+            torchvision.transforms.Normalize(*DATASET_NORMALIZATION[transform_dataname])
+        )
+
+        if resize:
+            if not dataname in DATASET_SIZES or DATASET_SIZES[dataname][0] != resize:
+                ## Avoid adding an "identity" resizing
+                transform_list.insert(0, transforms.Resize((resize, resize)))
+
+        transform = transforms.Compose(transform_list)
+        logger.info(transform)
+        train_transform, valid_transform = transform, transform
+    elif data is None:
+        if len(transform) == 1:
+            train_transform, valid_transform = transform, transform
+        elif len(transform) == 2:
+            train_transform, valid_transform = transform
+        else:
+            raise ValueError()
+
+    if data is None:
+        DATASET = getattr(torchvision.datasets, dataname)
+        if datadir is None:
+            datadir = DATA_DIR
+        if dataname == 'EMNIST':
+            split = 'bymerge'
+            train = DATASET(datadir, split=split, train=True, download=download, transform=train_transform)
+            test = DATASET(datadir, split=split, train=False, download=download, transform=valid_transform)
+            ## EMNIST seems to have a bug - classes are wrong
+            _merged_classes = {"c", "i", "j", "k", "l", "m", "o", "p", "s", "u", "v", "w", "x", "y", "z"}
+            _all_classes = set(list(string.digits + string.ascii_letters))
+            classes_split_dict = {
+                'byclass': list(_all_classes),
+                'bymerge': sorted(list(_all_classes - _merged_classes)),
+                'balanced': sorted(list(_all_classes - _merged_classes)),
+                'letters': list(string.ascii_lowercase),
+                'digits': list(string.digits),
+                'mnist': list(string.digits),
+            }
+            train.classes = classes_split_dict[split]
+            if split == 'letters':
+                ## The letters fold (and only that fold!!!) is 1-indexed
+                train.targets -= 1
+                test.targets -= 1
+        elif dataname == 'STL10':
+            train = DATASET(datadir, split='train', download=download, transform=train_transform)
+            test = DATASET(datadir, split='test', download=download, transform=valid_transform)
+            train.classes = ['airplane', 'bird', 'car', 'cat', 'deer', 'dog', 'horse', 'monkey', 'ship', 'truck']
+            test.classes = train.classes
+            train.targets = torch.tensor(train.labels)
+            test.targets = torch.tensor(test.labels)
+        elif dataname == 'SVHN':
+            train = DATASET(datadir, split='train', download=download, transform=train_transform)
+            test = DATASET(datadir, split='test', download=download, transform=valid_transform)
+            ## In torchvision, SVHN 0s have label 0, not 10
+            train.classes = test.classes = [str(i) for i in range(10)]
+            train.targets = torch.tensor(train.labels)
+            test.targets = torch.tensor(train.labels)
+        elif dataname == 'LSUN':
+            pdb.set_trace()
+            train = DATASET(datadir, classes='train', download=download, transform=train_transform)
+        else:
+            train = DATASET(datadir, train=True, download=download, transform=train_transform)
+            test = DATASET(datadir, train=False, download=download, transform=valid_transform)
+    else:
+        train, test = data
+
+
+    if type(train.targets) is list:
+        train.targets = torch.LongTensor(train.targets)
+        test.targets  = torch.LongTensor(test.targets)
+
+    if not hasattr(train, 'classes') or not train.classes:
+        train.classes = sorted(torch.unique(train.targets).tolist())
+        test.classes  = sorted(torch.unique(train.targets).tolist())
+
+    sampler_class = SubsetRandomSampler if shuffle else SubsetSampler
+    if target_indexes is None and sample_num is not None:
+        if target_type == 'train':
+            target_indexes = np.random.choice(range(len(train)), sample_num, replace=False)
+        elif target_type == 'test':
+            target_indexes = np.random.choice(range(len(test)), sample_num, replace=False)
+    if target_type == 'train':
+        sample_num = len(target_indexes)
+    elif target_type == 'test':
+        sample_num = len(target_indexes)
+    sampler = sampler_class(target_indexes)
+    ### Create DataLoaders
+    dataloader_args = dict(batch_size=batch_size,num_workers=num_workers)
+    if target_type == 'train':
+        custom_train = CustomDataset(train, target_indexes)
+        loader = dataloader.DataLoader(custom_train,**dataloader_args)
+        return loader, sample_num, custom_train
+    elif target_type == 'test':
+        custom_test = CustomDataset(test, target_indexes)
+        loader = dataloader.DataLoader(custom_test,**dataloader_args)
+        return loader, sample_num, custom_test
 
 def load_imagenet(datadir=None, resize=None, tiny=False, augmentations=False, **kwargs):
     """ Load ImageNet dataset """

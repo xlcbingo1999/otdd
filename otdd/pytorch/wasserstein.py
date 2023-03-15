@@ -306,22 +306,36 @@ def pwdist_exact(X1, Y1, X2=None, Y2=None, symmetric=False, loss='sinkhorn',
 
     if cost_function == 'euclidean':
         if p == 1:
-            cost_function = lambda x, y: geomloss.utils.distances(x, y)
+            small_cost_function = lambda x, y: geomloss.utils.distances(x, y)
+            big_cost_function = "Norm2(X-Y)"
         elif p == 2:
-            cost_function = lambda x, y: geomloss.utils.squared_distances(x, y)
+            small_cost_function = lambda x, y: geomloss.utils.squared_distances(x, y)
+            big_cost_function = "(SqDist(X,Y) / IntCst(2))"
         else:
             raise ValueError()
+    else:
+        small_cost_function = cost_function
+        big_cost_function = cost_function
 
     if loss == 'sinkhorn':
-        distance = geomloss.SamplesLoss(
+        small_distance = geomloss.SamplesLoss(
             loss=loss, p=p,
-            cost=cost_function,
+            cost=small_cost_function,
+            debias=debias,
+            blur=entreg**(1 / p),
+        )
+        big_distance = geomloss.SamplesLoss(
+            loss=loss, p=p,
+            cost=big_cost_function,
             debias=debias,
             blur=entreg**(1 / p),
         )
     elif loss == 'wasserstein':
-        def distance(Xa, Xb):
-            C = cost_function(Xa, Xb).cpu()
+        def small_distance(Xa, Xb):
+            C = small_cost_function(Xa, Xb).cpu()
+            return torch.tensor(ot.emd2(ot.unif(Xa.shape[0]), ot.unif(Xb.shape[0]), C))#, verbose=True)
+        def big_distance(Xa, Xb):
+            C = big_cost_function(Xa, Xb).cpu()
             return torch.tensor(ot.emd2(ot.unif(Xa.shape[0]), ot.unif(Xb.shape[0]), C))#, verbose=True)
     else:
         raise ValueError('Wrong loss')
@@ -333,7 +347,12 @@ def pwdist_exact(X1, Y1, X2=None, Y2=None, symmetric=False, loss='sinkhorn',
     D = torch.zeros((n1, n2), device = device, dtype=X1.dtype)
     for i, j in pbar:
         try:
-            D[i, j] = distance(X1[Y1==c1[i]].to(device), X2[Y2==c2[j]].to(device)).item()
+            temp_left = X1[Y1==c1[i]].to(device)
+            temp_right = X2[Y2==c2[j]].to(device)
+            if temp_left.shape[0] * temp_right.shape[0] >= 5000 ** 2:
+                D[i, j] = big_distance(temp_left, temp_right).item()
+            else:
+                D[i, j] = small_distance(temp_left, temp_right).item()
         except:
             print("This is awkward. Distance computation failed. Geomloss is hard to debug" \
                   "But here's a few things that might be happening: "\

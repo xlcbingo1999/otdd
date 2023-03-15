@@ -51,9 +51,13 @@ else:
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+logger.addHandler(ch)
 
 try:
-    import ot.gpu
+    import ot
 except:
     logger.warning('ot.gpu not found - coupling computation will be in cpu')
 
@@ -170,6 +174,7 @@ class DatasetDistance():
                  nworkers_dists=0,
                  eigen_correction=False,
                  device='cpu',
+                 batch_size=256,
                  precision='single',
                  verbose=1, *args, **kwargs):
 
@@ -207,6 +212,7 @@ class DatasetDistance():
         assert sqrt_pref in [0,1], 'sqrt pref must be 0 or 1'
         self.sqrt_pref   = sqrt_pref
         self.device = device
+        self.batch_size = batch_size
         self.precision = precision
         self.eigen_correction = eigen_correction
         self.verbose = verbose
@@ -387,6 +393,7 @@ class DatasetDistance():
             assert not self.ignore_source_labels, 'Should not be here if igoring target labels'
             self.X1, self.Y1 = load_full_dataset(self.D1, targets=True,
                                                  labels_keep=self.V1,
+                                                 batch_size=self.batch_size,
                                                  maxsamples=maxsamples,
                                                  device=device,
                                                  dtype=dtype,
@@ -399,6 +406,7 @@ class DatasetDistance():
             else:
                 self.X2, self.Y2 = load_full_dataset(self.D2, targets=True,
                                                      labels_keep=self.V2,
+                                                     batch_size=self.batch_size,
                                                      maxsamples=maxsamples,
                                                      device=device,
                                                      dtype=dtype,
@@ -1192,6 +1200,9 @@ class FeatureCost():
         self.tgt_dim = tgt_dim
         self.p = p
         self.device = device
+        if device != "cpu":
+            self.src_emb = self.src_emb.to(device)
+            self.tgt_emb = self.tgt_emb.to(device)
 
     def _get_batch_shape(self, b):
         if b.ndim == 3: return b.shape
@@ -1223,9 +1234,27 @@ class FeatureCost():
                 print('Batchifying feature distance computation')
                 X2 = self._batchify_computation(X2.view(-1,*self.tgt_dim).to(self.device), 'y').reshape(B2, N2, -1)
         if self.p == 1:
-            c = geomloss.utils.distances(X1, X2)
+            small_cost_function = lambda x, y: geomloss.utils.distances(x, y)
+            big_cost_function = "Norm2(X-Y)"
         elif self.p == 2:
-            c = geomloss.utils.squared_distances(X1, X2) / 2
+            small_cost_function = lambda x, y: geomloss.utils.squared_distances(x, y) / 2
+            big_cost_function = "(SqDist(X,Y) / IntCst(2))"
+        def small_distance(Xa, Xb):
+            C = small_cost_function(Xa, Xb)
+            return C #, verbose=True)
+        def big_distance(Xa, Xb):
+            C = big_cost_function(Xa, Xb)
+            return torch.tensor(ot.emd2(ot.unif(Xa.shape[0]), ot.unif(Xb.shape[0]), C))#, verbose=True)
+        if self.p == 1:
+            if X1.shape[0] * X2.shape[0] >= 5000 ** 2:
+                c = big_distance(X1, X2)# "Norm2(X-Y)"
+            else:
+                c = small_distance(X1, X2)
+        elif self.p == 2:
+            if X1.shape[0] * X2.shape[0] >= 5000 ** 2:
+                c = big_distance(X1, X2)
+            else:
+                c = small_distance(X1, X2)
         else:
             raise ValueError()
         return c.to(_orig_device)

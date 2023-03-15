@@ -121,6 +121,8 @@ def extract_dataset_targets(d):
     elif hasattr(dataset, 'tensors') and len(dataset.tensors) == 1:
         logger.warning('Dataset seems to be unlabeled - this modality is in beta mode!')
         targets = None
+    elif isinstance(dataset, torch.utils.data.ConcatDataset):
+        targets = torch.cat([extract_dataset_targets(sub_dataset)[0] for sub_dataset in dataset.datasets])
     else:
         raise ValueError("Could not find targets in dataset.")
 
@@ -274,7 +276,10 @@ def load_full_dataset(data, targets=False, return_both_targets=False,
 
         X.append(x.squeeze().view(x.shape[0],-1))
         if collect_targets: # = True or infer
-            Y.append(y.to(device).squeeze())
+            if len(y.shape) == 1 and y.shape[0] == 1:
+                Y.append(y.to(device))
+            else:
+                Y.append(y.to(device).squeeze()) # TODO(xlc): bugfix: 不知道为什么这里需要
     X = torch.cat(X)
 
     if collect_targets: Y = torch.cat(Y)
