@@ -1,12 +1,12 @@
 
-pandas
-scikit-learn
+# pandas
+# scikit-learn
 
-numpy
-scipy
-matplotlib
-torchvision
-torchtext
+# numpy
+# scipy
+# matplotlib
+# torchvision
+# torchtext
 sentence-transformers
 skorch
 
@@ -17,7 +17,7 @@ pykeops
 git+https://github.com/jeanfeydy/geomloss
 munkres
 
-tqdm
+# tqdm
 attrdict
 seaborn
 adjustText
