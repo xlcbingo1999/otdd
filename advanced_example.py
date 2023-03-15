@@ -114,11 +114,11 @@ else:
 
 current_time =  time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
 if train_dataset_name == 'EMNIST' or 'EMNIST' in test_dataset_names:
-    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id, ''.join(test_dataset_names), ''.join(map(str, test_sample_nums)), current_time)
-    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id,  ''.join(test_dataset_names), ''.join(map(str, test_sample_nums)), current_time)
+    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id, '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), current_time)
+    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, emnist_train_id,  '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), current_time)
 else:
-    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, ''.join(test_dataset_names), ''.join(map(str, test_sample_nums)), current_time)
-    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, ''.join(test_dataset_names), ''.join(map(str, test_sample_nums)), current_time)
+    result_file_name = '/mnt/linuxidc_client/otdd/{}_{}_{}_{}_{}_{}.log'.format(MODEL_NAME, EPSILON, train_dataset_name, '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), current_time)
+    summary_writer_path = '/mnt/linuxidc_client/tensorboard_20230314_otdd/{}_{}_{}_{}_{}_{}'.format(MODEL_NAME, EPSILON, train_dataset_name, '-'.join(test_dataset_names), '-'.join(map(str, test_sample_nums)), current_time)
 
 
 train_dir = None
