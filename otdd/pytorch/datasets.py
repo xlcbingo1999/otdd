@@ -596,7 +596,7 @@ def load_torchvision_data_from_indexes(dataname, target_indexes=None, sample_num
     dataloader_args = dict(batch_size=batch_size,num_workers=num_workers)
     if target_type == 'train':
         custom_train = CustomDataset(train, target_indexes)
-        loader = dataloader.DataLoader(custom_train,**dataloader_args)
+        loader = dataloader.DataLoader(custom_train, shuffle=True, **dataloader_args)
         return loader, sample_num, custom_train
     elif target_type == 'test':
         custom_test = CustomDataset(test, target_indexes)

@@ -1,28 +1,28 @@
 
 6 当前
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names EMNIST MNIST --test_sample_nums 1000 1000 --EPSILON 5.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names EMNIST MNIST --test_sample_nums 1000 1000 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names EMNIST MNIST --test_sample_nums 500 1500 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names EMNIST MNIST --test_sample_nums 1800 200 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names EMNIST MNIST --test_sample_nums 1500 500 --EPSILON 1.0 --model_name resnet
 
-// 未上线
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names EMNIST MNIST --test_sample_nums 500 1500 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names EMNIST MNIST --test_sample_nums 1800 200 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names EMNIST MNIST --test_sample_nums 1500 500 --EPSILON 5.0 --model_name resnet
+3 当前
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 1800 200 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 1500 500 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 1000 1000 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 500 1500 --EPSILON 1.0 --model_name resnet
 
+// 3
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 100 1900 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names USPS SVHN --test_sample_nums 1500 500 --EPSILON 1.0 --model_name resnet
 
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 1800 200 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 1500 500 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 1000 1000 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 500 1500 --EPSILON 5.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names USPS SVHN --test_sample_nums 1000 1000 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names USPS SVHN --test_sample_nums 500 1500 --EPSILON 1.0 --model_name resnet
 
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names EMNIST USPS --test_sample_nums 100 1900 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names USPS SVHN --test_sample_nums 1500 500 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names USPS SVHN --test_sample_nums 1000 1000 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names USPS SVHN --test_sample_nums 500 1500 --EPSILON 5.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names USPS --test_sample_nums 2000 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names SVHN --test_sample_nums 2000 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names CIFAR10 --test_sample_nums 2000 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names EMNIST --emnist_train_id 0 --emnist_test_id 0 --test_sample_nums 2000 --EPSILON 1.0 --model_name resnet
 
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names USPS --test_sample_nums 2000 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names SVHN --test_sample_nums 2000 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 2 --train_dataset_name EMNIST --test_dataset_names CIFAR10 --test_sample_nums 2000 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 3 --train_dataset_name EMNIST --test_dataset_names EMNIST --emnist_train_id 0 --emnist_test_id 0 --test_sample_nums 2000 --EPSILON 5.0 --model_name resnet
-
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names EMNIST --emnist_train_id 0 --emnist_test_id 3 --test_sample_nums 2000 --EPSILON 5.0 --model_name resnet
-python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names EMNIST --emnist_train_id 1 --emnist_test_id 0 --test_sample_nums 2000 --EPSILON 5.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 0 --train_dataset_name EMNIST --test_dataset_names EMNIST --emnist_train_id 0 --emnist_test_id 3 --test_sample_nums 2000 --EPSILON 1.0 --model_name resnet
+python /home/netlab/DL_lab/otdd/advanced_example.py --device_index 1 --train_dataset_name EMNIST --test_dataset_names EMNIST --emnist_train_id 1 --emnist_test_id 0 --test_sample_nums 2000 --EPSILON 1.0 --model_name resnet
 

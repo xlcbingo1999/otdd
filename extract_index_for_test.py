@@ -48,7 +48,7 @@ def get_df_config():
     parser.add_argument("--emnist_train_id", type=int, default=0)
     parser.add_argument("--emnist_test_id", type=int, default=1)
     parser.add_argument("--EPSILON", type=float, default=5.0)
-    parser.add_argument("--model_name", type=str, default="resnet18") # resnet18, resnet8
+    parser.add_argument("--model_name", type=str, default="CNN") # resnet18, resnet8
     parser.add_argument("--need_cal_OTDD", action='store_true')
 
     args = parser.parse_args()
@@ -63,7 +63,7 @@ test_dataset_names = args.test_dataset_names
 emnist_test_id = args.emnist_test_id
 test_sample_nums = args.test_sample_nums
 
-train_sample_num = 18000
+train_sample_num = 60000
 test_sample_num = 2000
 distance_batch_size = 1024
 calculate_batch_size = 1024
@@ -97,6 +97,10 @@ else:
 train_dir = '/mnt/linuxidc_client/dataset'
 test_dir = '/mnt/linuxidc_client/dataset'
 
+result_train_config_path = '/mnt/linuxidc_client/dataset/result_train_config.json'
+result_test_config_path = '/mnt/linuxidc_client/dataset/result_test_config.json'
+
+
 if train_dataset_name == 'EMNIST':
     sub_train_key = 'train_sub_{}'.format(emnist_train_id)
     sub_train_config_path = '/mnt/linuxidc_client/dataset/sub_train_datasets_config.json'
@@ -104,6 +108,7 @@ if train_dataset_name == 'EMNIST':
         current_subtrain_config = json.load(f)
         f.close()
     sub_train_origin_indexes_list = list(current_subtrain_config[train_dataset_name][sub_train_key]["indexes"])
+    print("len: {}".format(len(sub_train_origin_indexes_list)))
     sub_train_origin_indexes_list = np.random.choice(sub_train_origin_indexes_list, train_sample_num, replace=False)
 
     loaders_src, ratio_src, train_dataset = load_torchvision_data_from_indexes(train_dataset_name, target_indexes=sub_train_origin_indexes_list, sample_num=None, target_type='train', batch_size=distance_batch_size, resize=28, to3channels=True, datadir=train_dir)
